@@ -1,0 +1,115 @@
+plugins {
+  id 'org.springframework.boot' version '2.7.17'
+  id 'io.spring.dependency-management' version '1.1.0'
+  id 'java'
+  id 'jacoco'
+}
+
+group = 'com.mercadolibre'
+version = '0.0.1-SNAPSHOT'
+
+sourceCompatibility = 17
+targetCompatibility = 17
+
+repositories {
+  maven { url "https://maven.artifacts.furycloud.io/repository/all" }
+  mavenCentral()
+}
+
+tasks.withType(JavaCompile).configureEach {
+  options.compilerArgs += '-parameters'
+}
+
+tasks.withType(Jar).configureEach { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
+
+bootJar {
+  archiveFileName = 'application.jar'
+}
+
+configurations.configureEach {
+  exclude(group: 'org.slf4j', module: 'slf4j-log4j12')
+  exclude(group: 'log4j', module: 'log4j')
+  exclude(group: 'junit', module: 'junit')
+  exclude(group: 'org.junit.vintage', module: 'junit-vintage-engine')
+}
+
+dependencies {
+  // Internal application dependencies
+  implementation platform('com.mercadolibre.library:java-melitk-bom:1.1.12')
+  implementation('com.mercadolibre.metrics:metrics-core')
+  implementation('com.mercadolibre.metrics:datadog-metric-wrapper') {
+    exclude module: 'org.apache.commons.io'
+  }
+  implementation('com.mercadolibre:threading')
+  implementation('com.mercadolibre.json_jackson:json-jackson')
+
+  // External application dependencies
+  implementation('org.springframework.boot:spring-boot-starter-web') {
+    exclude module: 'spring-boot-starter-tomcat'
+  }
+  implementation('org.springframework.boot:spring-boot-starter-jetty')
+  implementation('com.fasterxml.jackson.module:jackson-module-blackbird')
+  implementation('com.newrelic.agent.java:newrelic-api:8.5.0')
+  implementation('org.springdoc:springdoc-openapi-ui:1.7.0')
+  implementation('commons-io:commons-io:2.15.0')
+
+  implementation('org.json:json:20231013')
+  implementation('com.google.guava:guava:32.1.3-jre') {
+    because 'Vulnerability: Creation of Temporary File in Directory with Insecure Permissions'
+  }
+  implementation('com.github.jnr:jnr-posix:3.1.18') {
+    because 'Vulnerability: Use After Free'
+  }
+  implementation('org.yaml:snakeyaml:2.2') {
+    because 'Vulnerability: Uncontrolled Resource Consumption in snakeyaml'
+  }
+
+  //Db
+  implementation('com.fury:furyutils:0.0.4')
+  implementation ('mysql:mysql-connector-java:8.0.33')
+  implementation ('org.springframework.boot:spring-boot-starter-data-jpa')
+  implementation ('org.projectlombok:lombok')
+
+  // Test dependencies for all projects
+  testImplementation platform('com.mercadolibre.library:java-melitk-bom:1.1.10')
+  testImplementation('org.springframework.boot:spring-boot-starter-test')
+  testImplementation('uk.org.webcompere:system-stubs-jupiter:2.0.2')
+  testImplementation('com.mercadolibre.restclient:restclient-core')
+  testImplementation('com.mercadolibre.restclient:restclient-core:1.1.8:tests')
+  testImplementation('org.hamcrest:hamcrest:2.2')
+  testImplementation ('com.h2database:h2')
+}
+
+test {
+  useJUnitPlatform()
+
+  // Always run tests, even when nothing changed.
+  dependsOn 'cleanTest'
+
+  // Show test results.
+  testLogging {
+    events "passed", "skipped", "failed"
+  }
+}
+
+jacoco {
+  toolVersion = "0.8.8"
+}
+
+jacocoTestReport {
+  reports {
+    xml.required = true
+    html.required = false
+  }
+  afterEvaluate {
+    classDirectories.setFrom(files(classDirectories.files.collect {
+      fileTree(dir: it, exclude: [
+              'com/mercadolibre/meaw_people_list_control_api/config*',
+              'com/mercadolibre/meaw_people_list_control_api/dtos*',
+              'com/mercadolibre/meaw_people_list_control_api/models*',
+              'com/mercadolibre/meaw_people_list_control_api/utils*',
+              'com/mercadolibre/meaw_people_list_control_api/Application.java'
+      ])
+    }))
+  }
+}

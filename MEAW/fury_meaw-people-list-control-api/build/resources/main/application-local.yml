@@ -1,0 +1,24 @@
+# Properties file for local/dev environment
+# You need to configure the environment variable in your IDE, more info in README.md
+# Overrides application.yml default properties
+
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+  datasource:
+    url: jdbc:mysql://localhost:3306/meawdb
+    username: root
+    password:
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    disable-swagger-default-url: true
+    use-root-path: true
+  packages-to-scan: com.mercadolibre.controller
